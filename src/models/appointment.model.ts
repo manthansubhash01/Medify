@@ -29,7 +29,7 @@ const AppointmentSchema: Schema = new Schema(
     status: {
       type: String,
       enum: Object.values(AppointmentStatus),
-      default: AppointmentStatus.BOOKED,
+      default: AppointmentStatus.PENDING,
     },
   },
   {

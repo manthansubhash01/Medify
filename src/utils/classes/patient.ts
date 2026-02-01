@@ -1,6 +1,7 @@
 import { Patient } from "../interfaces/patient.interface";
 import { PatientType } from "../enums/PatientType";
 import { Appointment } from "../classes/appointment";
+import { AppointmentStatus } from "../enums/AppointmentStatus";
 
 export class PatientClass implements Patient {
   constructor(
@@ -13,16 +14,28 @@ export class PatientClass implements Patient {
   ) {}
 
   requestAppointment(appointment: Appointment): void {
+    appointment.status = AppointmentStatus.PENDING;
     this.appointments.push(appointment);
   }
 
   cancelAppointment(appointmentId: string): void {
-    this.appointments = this.appointments.filter(
-      (apt) => apt.id !== appointmentId,
+    const appointment = this.appointments.find(
+      (apt) => apt.id === appointmentId,
+    );
+    if (appointment) {
+      appointment.cancel();
+    }
+  }
+
+  getConfirmedAppointments(): Appointment[] {
+    return this.appointments.filter(
+      (apt) => apt.status === AppointmentStatus.CONFIRMED,
     );
   }
 
-  getAppointments(): Appointment[] {
-    return this.appointments;
+  getPendingAppointments(): Appointment[] {
+    return this.appointments.filter(
+      (apt) => apt.status === AppointmentStatus.PENDING,
+    );
   }
 }

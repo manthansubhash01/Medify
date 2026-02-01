@@ -1,6 +1,10 @@
 import { Doctor } from "../interfaces/doctor.interface";
+import { Appointment } from "../classes/appointment";
+import { AppointmentStatus } from "../enums/AppointmentStatus";
 
 export class DoctorClass implements Doctor {
+  public appointments: Appointment[] = [];
+
   constructor(
     public name: string,
     public age: number,
@@ -15,7 +19,7 @@ export class DoctorClass implements Doctor {
     },
   ) {}
 
-  getAvailableSlots(date: Date): { start: string; end: string }[] {
+  isWorkingDay(date: Date): boolean {
     const days = [
       "Sunday",
       "Monday",
@@ -26,15 +30,64 @@ export class DoctorClass implements Doctor {
       "Saturday",
     ];
     const dayName = days[date.getDay()];
-
-    if (!this.workingDays.includes(dayName)) {
-      return [];
-    }
-
-    return [this.workingHours];
+    return this.workingDays.includes(dayName);
   }
 
-  isAvailable(day: string): boolean {
-    return this.workingDays.includes(day);
+  isAvailable(requestedStart: Date, requestedEnd: Date): boolean {
+    if (!this.isWorkingDay(requestedStart)) {
+      return false;
+    }
+
+    const hasConflict = this.appointments.some((apt) => {
+      if (apt.status !== AppointmentStatus.CONFIRMED) {
+        return false;
+      }
+      return (
+        (requestedStart >= apt.start && requestedStart < apt.end) ||
+        (requestedEnd > apt.start && requestedEnd <= apt.end) ||
+        (requestedStart <= apt.start && requestedEnd >= apt.end)
+      );
+    });
+
+    return !hasConflict;
+  }
+
+  acceptAppointment(appointment: Appointment): boolean {
+    if (!this.isAvailable(appointment.start, appointment.end)) {
+      return false;
+    }
+    appointment.status = AppointmentStatus.CONFIRMED;
+    this.appointments.push(appointment);
+    return true;
+  }
+
+  rejectAppointment(appointment: Appointment): void {
+    appointment.status = AppointmentStatus.REJECTED;
+  }
+
+  rescheduleAppointment(
+    appointmentId: string,
+    newStart: Date,
+    newEnd: Date,
+  ): boolean {
+    const appointment = this.appointments.find(
+      (apt) => apt.id === appointmentId,
+    );
+    if (!appointment) {
+      return false;
+    }
+
+    if (!this.isAvailable(newStart, newEnd)) {
+      return false;
+    }
+
+    appointment.reschedule(newStart, newEnd);
+    return true;
+  }
+
+  getConfirmedAppointments(): Appointment[] {
+    return this.appointments.filter(
+      (apt) => apt.status === AppointmentStatus.CONFIRMED,
+    );
   }
 }
