@@ -1,5 +1,8 @@
 import express from "express";
 import mongoose from "mongoose";
+import appointmentRoutes from "./routes/appointment.routes";
+import patientRoutes from "./routes/patient.routes";
+import doctorRoutes from "./routes/doctor.routes";
 
 export default class App {
   PORT: number | string;
@@ -35,6 +38,10 @@ export default class App {
 
   initializeRoutes(): void {
     this.app.use(express.json());
+
+    this.app.use("/api/appointments", appointmentRoutes);
+    this.app.use("/api/patients", patientRoutes);
+    this.app.use("/api/doctors", doctorRoutes);
 
     this.app.get("/health", (req, res) => {
       res.status(200).json({ status: "OK", message: "Server is running" });
